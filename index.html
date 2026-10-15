@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta de Amor Interactiva</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        handwriting: ['"Dancing Script"', 'cursive'],
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        romantic: {
+                            50: '#fff5f5',
+                            100: '#fed7d7',
+                            200: '#feb2b2',
+                            300: '#fc8181',
+                            400: '#f56565',
+                            500: '#e53e3e',
+                            600: '#c53030',
+                            700: '#9b2c2c',
+                            800: '#742a2a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Envelope 3D Container */
+        .envelope-wrapper {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            margin: 60px auto 20px;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: margin-top 0.5s ease;
+        }
+
+        @media (min-width: 640px) {
+            .envelope-wrapper {
+                width: 440px;
+                height: 280px;
+                margin: 90px auto 30px;
+            }
+        }
+
+        /* Adjust position when open so letter doesn't go off-screen top */
+        .envelope-wrapper.open {
+            margin-top: 140px;
+        }
+
+        @media (min-width: 640px) {
+            .envelope-wrapper.open {
+                margin-top: 180px;
+            }
+        }
+
+        /* Back pocket of the envelope */
+        .envelope-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #d81b60;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(216, 27, 96, 0.3);
+            z-index: 1;
+        }
+
+        /* Letter Inside */
+        .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 4%;
+            width: 92%;
+            height: 90%;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0.8s ease, box-shadow 0.5s ease;
+            z-index: 2;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 2px dashed #f48fb1;
+            transform-origin: bottom center;
+        }
+
+        /* Front triangular flaps of the envelope */
+        .envelope-front-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 110px 0 110px 160px;
+            border-color: transparent transparent transparent #ec407a;
+            z-index: 4;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+            pointer-events: none;
+        }
+
+        .envelope-front-right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 110px 160px 110px 0;
+            border-color: transparent #ec407a transparent transparent;
+            z-index: 4;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            pointer-events: none;
+        }
+
+        .envelope-front-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 160px 140px 160px;
+            border-color: transparent transparent #f4511e transparent;
+            z-index: 5;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            filter: drop-shadow(0 -3px 5px rgba(0, 0, 0, 0.1));
+            pointer-events: none;
+        }
+
+        @media (min-width: 640px) {
+            .envelope-front-left {
+                border-width: 140px 0 140px 220px;
+            }
+            .envelope-front-right {
+                border-width: 140px 220px 140px 0;
+            }
+            .envelope-front-bottom {
+                border-width: 0 220px 175px 220px;
+                border-color: transparent transparent #e91e63 transparent;
+            }
+        }
+
+        /* Top folding flap */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            border-style: solid;
+            border-width: 130px 160px 0 160px;
+            border-color: #c2185b transparent transparent transparent;
+            transform-origin: top center;
+            transition: transform 0.6s ease, z-index 0.6s ease;
+            z-index: 6;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        @media (min-width: 640px) {
+            .envelope-flap {
+                border-width: 165px 220px 0 220px;
+                border-color: #ad1457 transparent transparent transparent;
+            }
+        }
+
+        /* Heart Wax Seal */
+        .seal {
+            position: absolute;
+            top: 110px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #ff1744 0%, #b71c1c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 7;
+            transition: transform 0.3s ease, opacity 0.4s ease;
+        }
+
+        @media (min-width: 640px) {
+            .seal {
+                top: 135px;
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        .seal:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* OPEN STATE ANIMATIONS */
+        .envelope-wrapper.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1; /* Moves flap behind letter after opening */
+        }
+
+        .envelope-wrapper.open .seal {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* When open, raise letter far up and place on top z-index layer */
+        .envelope-wrapper.open .letter {
+            transform: translateY(-160px) scale(1.08);
+            z-index: 10;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (min-width: 640px) {
+            .envelope-wrapper.open .letter {
+                transform: translateY(-210px) scale(1.12);
+            }
+        }
+
+        /* Floating Hearts Background Canvas */
+        #heartCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 min-h-screen relative">
+
+    <canvas id="heartCanvas"></canvas>
+
+    <!-- Header / Title -->
+    <div class="text-center mb-4 relative z-10">
+        <h1 class="text-4xl md:text-5xl font-handwriting font-bold text-pink-900 drop-shadow-md mb-1">
+            Una Sorpresa Para Ti 💕
+        </h1>
+        <p class="text-pink-800 text-xs md:text-sm font-medium">
+            Toca el sobre o el sello para abrir la carta
+        </p>
+    </div>
+
+    <div class="main-container relative z-10 my-4">
+        <div class="envelope-wrapper" id="envelopeWrapper" onclick="toggleEnvelope()">
+            <div class="envelope-back"></div>
+            
+            <!-- Letter inside -->
+            <div class="letter" id="letterContent">
+                <div class="text-center border-b border-pink-200 pb-1">
+                    <span class="text-xs uppercase tracking-widest text-pink-400 font-semibold">Una nota con amor</span>
+                    <h2 class="font-handwriting text-2xl md:text-3xl text-pink-700 font-bold" id="letterHeading">Querida Fanny ❤️</h2>
+                </div>
+                <div class="my-2 text-gray-700 text-xs md:text-sm leading-relaxed overflow-y-auto max-h-36 md:max-h-48 px-1 font-sans" id="letterText">
+                    <p class="mb-2">
+                        Con esta carta quiero demostrarte de todo corazón que en verdad quiero estar contigo. No importa lo difícil que se pongan las cosas ni los obstáculos que tengamos que enfrentar, mi decisión siempre serás tú.
+                    </p>
+                    <p class="mb-2">
+                        Quiero caminar a tu lado, apoyarte y estar contigo tanto en las buenas como en las malas. Eres una persona verdaderamente única e importante para mí.
+                    </p>
+                    <p class="mb-2 italic text-pink-600 font-medium">
+                        Y como dijo Harry Styles: <strong>Just let me adore you</strong> ✨
+                    </p>
+                </div>
+                <div class="text-center pt-2 border-t border-pink-100 flex justify-center gap-2">
+                    <button onclick="event.stopPropagation(); expandLetterModal();" class="bg-pink-500 hover:bg-pink-600 text-white text-xs px-3 py-1.5 rounded-full shadow transition flex items-center gap-1 font-medium">
+                        🔍 Ampliar Pantalla Completa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Front Flaps -->
+            <div class="envelope-front-left"></div>
+            <div class="envelope-front-right"></div>
+            <div class="envelope-front-bottom"></div>
+            <div class="envelope-flap"></div>
+
+            <!-- Wax Seal -->
+            <div class="seal" id="waxSeal">
+                <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls / Action Buttons -->
+    <div class="mt-6 flex flex-wrap justify-center gap-4 relative z-20">
+        <button onclick="toggleEnvelope()" class="bg-white/90 hover:bg-white text-pink-700 font-semibold px-6 py-2.5 rounded-full shadow-lg border border-pink-200 transition transform hover:-translate-y-0.5">
+            💌 <span id="buttonText">Abrir Sobre</span>
+        </button>
+    </div>
+
+    <!-- Expanded Modal for comfortable reading -->
+    <div id="letterModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 md:p-8 shadow-2xl relative transform scale-95 transition-transform duration-300 border-4 border-pink-200" id="modalBox">
+            <button onclick="closeLetterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-pink-600 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-pink-50 transition">
+                &times;
+            </button>
+            
+            <div class="text-center mb-4">
+                <span class="text-3xl">💌</span>
+                <h3 class="font-handwriting text-3xl md:text-4xl text-pink-600 font-bold mt-1" id="modalHeader">Para Ti</h3>
+            </div>
+
+            <div id="modalLetterBody" class="text-gray-700 text-sm md:text-base leading-relaxed space-y-4 my-6 font-sans max-h-[60vh] overflow-y-auto px-2">
+                <!-- Content synced dynamically -->
+            </div>
+
+            <div class="text-center pt-2">
+                <button onclick="closeLetterModal()" class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-6 py-2 rounded-full shadow transition">
+                    Cerrar Carta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isOpen = false;
+
+        function toggleEnvelope() {
+            const wrapper = document.getElementById('envelopeWrapper');
+            const buttonText = document.getElementById('buttonText');
+            
+            isOpen = !isOpen;
+
+            if (isOpen) {
+                wrapper.classList.add('open');
+                buttonText.innerText = 'Cerrar Sobre';
+            } else {
+                wrapper.classList.remove('open');
+                buttonText.innerText = 'Abrir Sobre';
+            }
+        }
+
+        function expandLetterModal() {
+            const modal = document.getElementById('letterModal');
+            const modalBox = document.getElementById('modalBox');
+            const modalLetterBody = document.getElementById('modalLetterBody');
+            const letterText = document.getElementById('letterText').innerHTML;
+
+            modalLetterBody.innerHTML = letterText;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalBox.classList.remove('scale-95');
+            modalBox.classList.add('scale-100');
+        }
+
+        function closeLetterModal() {
+            const modal = document.getElementById('letterModal');
+            const modalBox = document.getElementById('modalBox');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+        }
+
+        /* FLOATING HEARTS ANIMATION IN CANVAS */
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Heart {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 20;
+                this.size = Math.random() * 15 + 8;
+                this.speedY = Math.random() * 1.5 + 0.8;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.5;
+                this.opacity = Math.random() * 0.6 + 0.3;
+                this.color = `hsla(${Math.random() * 20 + 340}, 80%, 65%, ${this.opacity})`;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += this.speedX;
+                if (this.y < -20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                const d = this.size;
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-d / 2, -d / 2, -d, d / 3, 0, d);
+                ctx.bezierCurveTo(d, d / 3, d / 2, -d / 2, 0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        const hearts = Array.from({ length: 30 }, () => new Heart());
+
+        function animateHearts() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach(heart => {
+                heart.update();
+                heart.draw();
+            });
+            requestAnimationFrame(animateHearts);
+        }
+
+        window.onload = function() {
+            animateHearts();
+        };
+    </script>
+</body>
+</html>
